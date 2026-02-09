@@ -1,184 +1,167 @@
 <!DOCTYPE html>
-<html lang="kk">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safety Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-        body { background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; color: white; }
-        .lightbox { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.9); align-items: center; justify-content: center; }
-        .lightbox.active { display: flex; }
-        .control-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; }
-        .mode-active { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        .violation-card { transition: all 0.3s; background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; }
-        .violation-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: #3b82f6; }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Safety Dashboard</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+  body {
+    background: radial-gradient(circle at top, #020617, #0f172a 40%, #020617 100%);
+    color: #e5e7eb;
+  }
+
+  .glass {
+    background: rgba(15, 23, 42, 0.65);
+    backdrop-filter: blur(14px);
+    border: 1px solid rgba(148, 163, 184, 0.15);
+  }
+
+  .status-online {
+    box-shadow: 0 0 18px rgba(16, 185, 129, 0.8);
+  }
+
+  .violation-card {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+  }
+
+  .violation-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 25px 40px rgba(0,0,0,0.6);
+  }
+
+  .violation-overlay {
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(220,38,38,0.95),
+      rgba(220,38,38,0.95) 10px,
+      rgba(185,28,28,0.95) 10px,
+      rgba(185,28,28,0.95) 20px
+    );
+  }
+</style>
 </head>
-<body class="p-4 md:p-8">
 
-    <main class="max-w-6xl mx-auto space-y-6">
-        
-        <section class="control-panel p-6 rounded-2xl shadow-xl mt-4">
-            <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
-                🎮 Жүйені басқару
-            </h2>
-            <div class="flex flex-wrap gap-6 items-center justify-between">
-                
-                <div class="flex flex-col gap-2">
-                    <span class="text-sm text-gray-400 uppercase tracking-wider font-bold">Жұмыс режимі:</span>
-                    <div class="inline-flex bg-slate-900 p-1 rounded-xl border border-slate-700">
-                        <button onclick="toggleMode('auto')" id="autoBtn" 
-                            class="mode-active px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300">
-                            🤖 AUTO
-                        </button>
-                        <button onclick="toggleMode('manual')" id="manualBtn" 
-                            class="px-6 py-2 rounded-lg text-sm font-bold transition-all duration-300 text-gray-500">
-                            👤 MANUAL
-                        </button>
-                    </div>
-                </div>
+<body class="min-h-screen flex">
 
-                <div id="captureArea" class="hidden transition-all duration-500 transform scale-95 opacity-0">
-                    <button onclick="triggerCapture()" id="captureBtn" 
-                        class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 px-10 py-3 rounded-xl font-bold shadow-lg flex items-center gap-2 active:scale-95 transition-all">
-                        <span class="text-xl">📸</span> СУРЕТКЕ ТҮСІРУ
-                    </button>
-                </div>
+<!-- Sidebar -->
+<aside class="w-20 lg:w-64 glass p-4 flex flex-col gap-6">
+  <div class="text-center font-bold tracking-widest text-cyan-400">
+    AI SAFE
+  </div>
 
-                <div class="text-right">
-                    <span class="text-gray-400 text-xs block uppercase">Тіркелген оқиғалар</span>
-                    <span id="totalCount" class="text-3xl font-mono font-bold text-blue-400">6</span>
-                </div>
-            </div>
-        </section>
+  <nav class="flex flex-col gap-4 text-sm">
+    <span class="text-cyan-400">Dashboard</span>
+    <span class="text-slate-400 hover:text-white cursor-pointer">Violations</span>
+    <span class="text-slate-400 hover:text-white cursor-pointer">Analytics</span>
+    <span class="text-slate-400 hover:text-white cursor-pointer">Cameras</span>
+    <span class="text-slate-400 hover:text-white cursor-pointer">Settings</span>
+  </nav>
 
-        <div class="flex gap-4">
-            <input type="text" id="searchInput" placeholder="Іздеу..." onkeyup="filterViolations()"
-                class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
-            <button onclick="loadViolations()" class="bg-slate-700 hover:bg-slate-600 px-6 rounded-xl transition">
-                🔄 Жаңарту
-            </button>
+  <div class="mt-auto">
+    <div class="flex items-center gap-2 justify-center lg:justify-start">
+      <span class="w-3 h-3 rounded-full bg-emerald-400 status-online"></span>
+      <span class="text-xs text-emerald-400">SYSTEM ONLINE</span>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="flex-1 p-6 space-y-6">
+
+  <!-- Top Analytics -->
+  <section class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="glass rounded-2xl p-5">
+      <h3 class="text-sm uppercase tracking-wider text-slate-400 mb-2">
+        Helmet Violations (24h)
+      </h3>
+      <canvas id="chart1" height="120"></canvas>
+    </div>
+
+    <div class="glass rounded-2xl p-5">
+      <h3 class="text-sm uppercase tracking-wider text-slate-400 mb-2">
+        Detection Confidence
+      </h3>
+      <canvas id="chart2" height="120"></canvas>
+    </div>
+
+    <div class="glass rounded-2xl p-5 flex flex-col justify-between">
+      <div>
+        <h3 class="text-sm uppercase tracking-wider text-slate-400">
+          Total Events
+        </h3>
+        <div class="text-4xl font-mono text-cyan-400 mt-4">128</div>
+      </div>
+      <span class="text-xs text-slate-500 mt-6">Real-time feed active</span>
+    </div>
+  </section>
+
+  <!-- Violations Grid -->
+  <section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+    
+    <div class="violation-card glass rounded-2xl overflow-hidden">
+      <div class="relative h-56">
+        <img src="https://www.safetyandhealthmagazine.com/ext/resources/images/news/construction-worker-no-hard-hat.jpg"
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 violation-overlay flex items-center justify-center">
+          <span class="text-white font-extrabold tracking-widest text-sm">
+            HELMET VIOLATION
+          </span>
         </div>
+      </div>
+      <div class="p-4">
+        <div class="text-emerald-400 font-semibold">Worker #102</div>
+        <div class="text-xs text-slate-400 mt-1">09 Feb 2026 · 10:15:30</div>
+      </div>
+    </div>
 
-        <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://www.safetyandhealthmagazine.com/ext/resources/images/news/construction-worker-no-hard-hat.jpg" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #102</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 10:15:30</div>
-                </div>
-            </div>
+    <!-- Duplicate cards as needed -->
+    
+  </section>
 
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://media.istockphoto.com/id/183023075/photo/carefree-construction-worker.jpg?s=612x612&w=0&k=20&c=6_n-u74l8oD87mK7X65F9wT92S2M4f_O_47mEonVvU4=" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #105</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 11:45:12</div>
-                </div>
-            </div>
+</main>
 
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://thumbs.dreamstime.com/b/construction-worker-not-wearing-his-safety-helmet-6617062.jpg" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #201</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 12:20:05</div>
-                </div>
-            </div>
+<script>
+const chartStyle = {
+  borderColor: '#22d3ee',
+  backgroundColor: 'rgba(34,211,238,0.15)',
+  tension: 0.45,
+  pointRadius: 0
+};
 
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://st2.depositphotos.com/1000393/11267/i/450/depositphotos_112679240-stock-photo-construction-worker-at-building-site.jpg" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #208</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 13:05:44</div>
-                </div>
-            </div>
+new Chart(chart1, {
+  type: 'line',
+  data: {
+    labels: ['00','04','08','12','16','20','24'],
+    datasets: [{ data: [3,7,5,12,9,14,11], ...chartStyle }]
+  },
+  options: {
+    plugins: { legend: { display: false }},
+    scales: { x: { display: false }, y: { display: false }}
+  }
+});
 
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://media.gettyimages.com/id/157482027/photo/portrait-of-manual-worker-on-building-site.jpg?s=612x612&w=0&k=20&c=L_f9076Hh1f9Pj5zV94J6pY7V-A9y6V7I6lW6W7M8vU=" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #301</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 14:40:10</div>
-                </div>
-            </div>
+new Chart(chart2, {
+  type: 'line',
+  data: {
+    labels: ['A','B','C','D','E','F'],
+    datasets: [{
+      data: [92,94,93,95,96,97],
+      borderColor: '#10b981',
+      backgroundColor: 'rgba(16,185,129,0.2)',
+      tension: 0.4,
+      pointRadius: 0
+    }]
+  },
+  options: {
+    plugins: { legend: { display: false }},
+    scales: { x: { display: false }, y: { display: false }}
+  }
+});
+</script>
 
-            <div class="violation-card rounded-2xl overflow-hidden">
-                <div class="relative h-56">
-                    <img src="https://thumbs.dreamstime.com/b/unprotected-worker-construction-site-19302636.jpg" class="w-full h-full object-cover">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg text-emerald-400">Worker #310</h3>
-                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 15:55:00</div>
-                </div>
-            </div>
-
-        </div>
-    </main>
-
-    <script>
-        // Батырмалар мен режимдер логикасы (ешқандай қысқартусыз)
-        async function toggleMode(mode) {
-            const isAuto = mode === 'auto';
-            document.getElementById('autoBtn').classList.toggle('mode-active', isAuto);
-            document.getElementById('manualBtn').classList.toggle('mode-active', !isAuto);
-            document.getElementById('autoBtn').classList.toggle('text-gray-500', !isAuto);
-            document.getElementById('manualBtn').classList.toggle('text-gray-500', isAuto);
-            
-            const captureArea = document.getElementById('captureArea');
-            if (!isAuto) {
-                captureArea.classList.remove('hidden');
-                setTimeout(() => captureArea.classList.remove('opacity-0', 'scale-95'), 10);
-            } else {
-                captureArea.classList.add('opacity-0', 'scale-95');
-                setTimeout(() => captureArea.classList.add('hidden'), 300);
-            }
-
-            try {
-                await fetch('/api/set_mode', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode: mode })
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function triggerCapture() {
-            const btn = document.getElementById('captureBtn');
-            btn.innerHTML = "⌛ Түсіріп жатыр...";
-            try {
-                await fetch('/api/trigger_capture', { method: 'POST' });
-                alert("📸 Суретке түсіру командасы жіберілді!");
-            } catch (e) { console.error(e); }
-            btn.innerHTML = "📸 СУРЕТКЕ ТҮСІРУ";
-        }
-
-        async function loadViolations() {
-            try {
-                const res = await fetch('/api/violations');
-                const data = await res.json();
-                if (data.violations && data.violations.length > 0) {
-                    // Базада сурет болса, тізімді жаңартады
-                    document.getElementById('totalCount').innerText = data.total;
-                }
-            } catch (e) { console.error(e); }
-        }
-    </script>
 </body>
 </html>
