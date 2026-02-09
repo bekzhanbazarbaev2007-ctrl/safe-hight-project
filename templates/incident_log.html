@@ -147,7 +147,28 @@
                 </select>
             </div>
         </div>
+<div class="controls">
+    <button onclick="toggleMode('auto')" id="autoBtn" class="active">AUTO Mode</button>
+    <button onclick="toggleMode('manual')" id="manualBtn">MANUAL Mode</button>
+</div>
 
+<script>
+function toggleMode(mode) {
+    // Режимді серверге жіберу
+    fetch('/api/set_mode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: mode })
+    })
+    .then(res => res.json())
+    .then(data => {
+        alert("Режим ауыстырылды: " + data.current_mode);
+        // Батырмалардың түсін өзгерту
+        document.getElementById('autoBtn').classList.toggle('active', mode === 'auto');
+        document.getElementById('manualBtn').classList.toggle('active', mode === 'manual');
+    });
+}
+</script>
         <!-- Loading Indicator -->
         <div id="loadingIndicator" class="flex justify-center items-center py-20">
             <div class="loading"></div>
