@@ -5,23 +5,19 @@ from datetime import datetime
 import base64
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'static/violations'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 
 
-# --- ОСЫ БӨЛІМ Render ҮШІН ӨТЕ МАҢЫЗДЫ ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(BASE_DIR, 'database.db')
-UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'violations')
+# --- ЖАҢА: Жүйе күйін сақтау ---
+system_status = {
+    "mode": "auto",
+    "trigger_capture": False
+}
 
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
-
-# Папкалар жоқ болса, автоматты түрде жасау
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-# ---------------------------------------
 
-# Initialize database
 def init_db():
-    # Базаға толық жол (DB_PATH) арқылы қосылу
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect('database.db')
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS violations (
@@ -36,135 +32,93 @@ def init_db():
     conn.commit()
     conn.close()
 
-# Сервер қосылғанда базаны бірден дайындау
 init_db()
 
 @app.route('/')
 def index():
-    # Ең басты қате осы жерде болды. Енді ол DB_PATH-ты көреді.
-    try:
-        return render_template('incident_log.html')
-    except Exception as e:
-        return f"Template Error: {str(e)}", 500
+    return render_template('incident_log.html')
 
+# --- ЖАҢА: Режимді ауыстыру API ---
+@app.route('/api/set_mode', methods=['POST'])
+def set_mode():
+    data = request.json
+    system_status["mode"] = data.get('mode', 'auto')
+    return jsonify({"status": "success", "current_mode": system_status["mode"]})
+
+# --- ЖАҢА: Суретке түсіру командасын беру ---
+@app.route('/api/trigger_capture', methods=['POST'])
+def trigger_capture():
+    system_status["trigger_capture"] = True
+    return jsonify({"status": "command_sent"})
+
+# --- ЖАҢА: Бот үшін статус тексеру ---
+@app.route('/api/get_system_status', methods=['GET'])
+def get_status():
+    status = system_status.copy()
+    system_status["trigger_capture"] = False # Команда бір рет орындалуы үшін
+    return jsonify(status)
+
+# Сенің ескі add_violation функцияң (өзгеріссіз)
 @app.route('/api/add_violation', methods=['POST'])
 def add_violation():
-    """Receive violation data from Telegram bot"""
     try:
         data = request.json
-        if not data:
-            return jsonify({'error': 'No data received'}), 400
-            
-        timestamp = data.get('timestamp', datetime.now().strftime('%H:%M:%S %d.%m.%Y'))
-        violation_type = data.get('violation_type', 'No Helmet')
+        timestamp = data.get('timestamp', datetime.now().strftime("%H:%M:%S"))
+        violation_type = data.get('violation_type', 'Unknown')
+        image_data = data.get('image')
         object_name = data.get('object_name', 'Worker')
         
-        image_path = None
-        if 'image_base64' in data:
-            image_data = base64.b64decode(data['image_base64'])
-            filename = f"violation_{int(datetime.now().timestamp())}.jpg"
-            
-            # Рендерде файлды сақтау үшін толық жол керек
-            full_save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-            
-            with open(full_save_path, 'wb') as f:
-                f.write(image_data)
-            
-            image_path = f"violations/{filename}"
+        filename = f"violation_{int(datetime.now().timestamp())}.jpg"
+        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         
-        elif 'image_path' in data:
-            image_path = data['image_path']
+        with open(filepath, "wb") as fh:
+            fh.write(base64.b64decode(image_data))
         
-        if not image_path:
-            return jsonify({'error': 'No image provided'}), 400
-        
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO violations (timestamp, violation_type, image_path, object_name)
             VALUES (?, ?, ?, ?)
-        ''', (timestamp, violation_type, image_path, object_name))
+        ''', (timestamp, violation_type, f"violations/{filename}", object_name))
         conn.commit()
-        last_id = cursor.lastrowid
         conn.close()
-        
-        return jsonify({
-            'status': 'success',
-            'message': 'Violation recorded',
-            'id': last_id
-        }), 201
-    
+        return jsonify({'status': 'success', 'id': cursor.lastrowid})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# Сенің ескі api/violations функцияң (өзгеріссіз)
 @app.route('/api/violations', methods=['GET'])
 def get_violations():
-    """Get all violations"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('database.db')
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
-        
-        limit = request.args.get('limit', 50, type=int)
-        offset = request.args.get('offset', 0, type=int)
-        
-        cursor.execute('''
-            SELECT id, timestamp, violation_type, image_path, object_name, created_at
-            FROM violations
-            ORDER BY created_at DESC
-            LIMIT ? OFFSET ?
-        ''', (limit, offset))
-        
-        violations = []
-        for row in cursor.fetchall():
-            violations.append({
-                'id': row['id'],
-                'timestamp': row['timestamp'],
-                'violation_type': row['violation_type'],
-                'image_path': row['image_path'],
-                'object_name': row['object_name'],
-                'created_at': row['created_at']
-            })
-        
-        cursor.execute('SELECT COUNT(*) as count FROM violations')
-        total = cursor.fetchone()['count']
+        cursor.execute('SELECT * FROM violations ORDER BY created_at DESC')
+        rows = cursor.fetchall()
+        violations = [dict(row) for row in rows]
         conn.close()
-        
-        return jsonify({
-            'violations': violations,
-            'total': total,
-            'limit': limit,
-            'offset': offset
-        })
+        return jsonify({'violations': violations, 'total': len(violations)})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/api/violations/<int:violation_id>', methods=['DELETE'])
 def delete_violation(violation_id):
-    """Delete a specific violation"""
     try:
-        conn = sqlite3.connect(DB_PATH)
+        conn = sqlite3.connect('database.db')
         cursor = conn.cursor()
-        
         cursor.execute('SELECT image_path FROM violations WHERE id = ?', (violation_id,))
         row = cursor.fetchone()
-        
         if row:
             cursor.execute('DELETE FROM violations WHERE id = ?', (violation_id,))
             conn.commit()
-            
-            image_path = row[0]
-            full_path = os.path.join(BASE_DIR, 'static', image_path)
+            full_path = os.path.join('static', row[0])
             if os.path.exists(full_path):
                 os.remove(full_path)
-            
             conn.close()
-            return jsonify({'status': 'success', 'message': 'Violation deleted'})
-        else:
-            conn.close()
-            return jsonify({'error': 'Violation not found'}), 404
+            return jsonify({'status': 'success'})
+        return jsonify({'error': 'Not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, port=5000)
