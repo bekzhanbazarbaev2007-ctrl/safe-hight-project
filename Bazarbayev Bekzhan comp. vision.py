@@ -12,7 +12,8 @@ TOKEN = "8071874921:AAHZn3SdfNc0K29fdnLBbB9quEGnuK6czc4"
 CHAT_ID = "5868939793"
 
 # WEB SERVER INTEGRATION
-WEB_SERVER_URL = "https://safe-hight-project.onrender.com/api/add_violation"
+WEB_SERVER_URL = "https://safe-hight-project-2.onrender.com/api/add_violation"
+STATUS_URL = "https://safe-hight-project-2.onrender.com/api/get_system_status" # Статус тексеру үшін
 
 stats = {
     "start_time": time.time(),
@@ -63,15 +64,15 @@ def send_to_web_server(image_path, message):
         # Prepare payload
         payload = {
             'timestamp': timestamp,
-            'violation_type': 'No Helmet',
+            'violation_type': 'No Helmet' if 'Каскасыз' in message else 'Manual Capture',
             'object_name': 'Worker',
-            'image_base64': img_base64
+            'image': img_base64 # app.py 'image' кілтін күтеді
         }
         
         # Send POST request to web server
         response = requests.post(WEB_SERVER_URL, json=payload, timeout=5)
         
-        if response.status_code == 201:
+        if response.status_code == 200 or response.status_code == 201:
             print(f"✅ Violation sent to web server successfully")
         else:
             print(f"⚠️ Web server response: {response.status_code}")
@@ -80,6 +81,32 @@ def send_to_web_server(image_path, message):
         print("⚠️ Web server is not running. Start Flask server (python app.py)")
     except Exception as e:
         print(f"❌ Error sending to web server: {e}")
+
+# --- ЖАҢА: Сайттан командаларды бақылау функциясы ---
+def web_control_worker():
+    global auto_mode, current_frame
+    while True:
+        try:
+            response = requests.get(STATUS_URL, timeout=3).json()
+            
+            # 1. Режимді жаңарту (Сайттан)
+            auto_mode = (response['mode'] == 'auto')
+            
+            # 2. Суретке түсіру бұйрығы (Сайттан)
+            if response['trigger_capture'] and current_frame is not None:
+                print("📸 Сайттан суретке түсіру командасы келді!")
+                t_str = time.strftime("%H%M%S")
+                path = f"violations/web_capture_{t_str}.jpg"
+                cv2.imwrite(path, current_frame)
+                stats["total_captures"] += 1
+                send_telegram_alert(path, "📸 Сайттан басқару арқылы түсірілген сурет")
+                
+        except Exception as e:
+            # print(f"Web status error: {e}")
+            pass
+        time.sleep(1) # Серверді шаршатпау үшін 1 секунд үзіліс
+
+threading.Thread(target=web_control_worker, daemon=True).start()
 
 def telegram_worker():
     global last_update_id, current_frame, report_sent_today
@@ -126,7 +153,7 @@ p_time, last_save_time = 0, 0
 print("🚀 Computer Vision System Started")
 print("📡 Web Server URL:", WEB_SERVER_URL)
 print("🤖 Telegram Integration: Active")
-print("\nҚышқылдар:")
+print("\nБатырмалар:")
 print("  Q - Шығу")
 print("  M - AUTO/MANUAL режимін ауыстыру")
 print("  S - Қолмен сурет түсіру (MANUAL режимінде)")
@@ -177,7 +204,6 @@ while True:
         x, y, w_f, h_f = sx*2, sy*2, sw*2, sh*2
         cv2.rectangle(display_frame, (x, y), (x + w_f, y + h_f), (255, 0, 0), 2)
 
-       
         helmet_roi = hsv_small[max(0, sy-int(sh*0.5)) : sy, sx : sx + sw]
         has_helmet = False
         if helmet_roi.size > 0:
@@ -202,9 +228,9 @@ while True:
     elif key == ord('m'): auto_mode = not auto_mode
     elif key == ord('s') and not auto_mode:
         stats["total_captures"] += 1
-        cv2.imwrite(f"violations/manual_{int(time.time())}.jpg", frame)
-        send_telegram_alert(f"violations/manual_{int(time.time())}.jpg", "📸 Қолмен сурет")
+        img_p = f"violations/manual_{int(time.time())}.jpg"
+        cv2.imwrite(img_p, frame)
+        send_telegram_alert(img_p, "📸 Қолмен сурет")
 
 cap.release()
 cv2.destroyAllWindows()
-
