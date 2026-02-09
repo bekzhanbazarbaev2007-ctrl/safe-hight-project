@@ -12,7 +12,6 @@
             min-height: 100vh;
         }
 
-        /* Lightbox styles */
         .lightbox {
             display: none;
             position: fixed;
@@ -48,7 +47,6 @@
             z-index: 1000;
         }
 
-        /* Card hover effects */
         .violation-card {
             transition: all 0.3s ease;
         }
@@ -58,7 +56,6 @@
             box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.3);
         }
 
-        /* Image thumbnail hover */
         .img-thumbnail {
             transition: all 0.3s ease;
             cursor: pointer;
@@ -69,7 +66,6 @@
             box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
         }
 
-        /* Loading animation */
         .loading {
             border: 4px solid #1e293b;
             border-top: 4px solid #3b82f6;
@@ -80,35 +76,33 @@
         }
 
         @keyframes spin {
-            0% {
-                transform: rotate(0deg);
-            }
-
-            100% {
-                transform: rotate(360deg);
-            }
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        /* Badge styles */
         .badge-danger {
             background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        /* Жаңа стильдер */
+        .mode-btn-active {
+            background-color: #2563eb !important;
+            color: white !important;
+            border-color: #2563eb !important;
         }
     </style>
 </head>
 
 <body class="text-gray-100">
-    <!-- Header -->
     <header class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
         <div class="container mx-auto px-6 py-4">
             <div class="flex items-center justify-between">
                 <div class="flex items-center space-x-4">
-                    <div
-                        class="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
                         <span class="text-2xl">⚠️</span>
                     </div>
                     <div>
-                        <h1
-                            class="text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
+                        <h1 class="text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
                             Incident Log
                         </h1>
                         <p class="text-sm text-gray-400">Қауіпсіздік бұзушылықтары журналы</p>
@@ -120,8 +114,7 @@
                         <p class="text-sm text-gray-400">Барлығы бұзушылықтар</p>
                         <p class="text-2xl font-bold text-blue-400" id="totalCount">0</p>
                     </div>
-                    <button onclick="loadViolations()"
-                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                    <button onclick="loadViolations()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
                         🔄 Жаңарту
                     </button>
                 </div>
@@ -129,9 +122,7 @@
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="container mx-auto px-6 py-8">
-        <!-- Filter & Search -->
         <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 mb-6 border border-slate-700">
             <div class="flex flex-wrap gap-4 items-center">
                 <div class="flex-1 min-w-[200px]">
@@ -147,39 +138,36 @@
                 </select>
             </div>
         </div>
-<div class="controls">
-    <button onclick="toggleMode('auto')" id="autoBtn" class="active">AUTO Mode</button>
-    <button onclick="toggleMode('manual')" id="manualBtn">MANUAL Mode</button>
-</div>
 
-<script>
-function toggleMode(mode) {
-    // Режимді серверге жіберу
-    fetch('/api/set_mode', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode: mode })
-    })
-    .then(res => res.json())
-    .then(data => {
-        alert("Режим ауыстырылды: " + data.current_mode);
-        // Батырмалардың түсін өзгерту
-        document.getElementById('autoBtn').classList.toggle('active', mode === 'auto');
-        document.getElementById('manualBtn').classList.toggle('active', mode === 'manual');
-    });
-}
-</script>
-        <!-- Loading Indicator -->
+        <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 mb-6 border border-slate-700 flex flex-wrap gap-6 items-center justify-between">
+            <div class="flex items-center gap-4">
+                <span class="text-gray-300 font-semibold">Жүйе режимі:</span>
+                <div class="inline-flex rounded-md shadow-sm">
+                    <button onclick="toggleMode('auto')" id="autoBtn" 
+                        class="mode-btn-active px-6 py-2 text-sm font-medium rounded-l-lg border border-slate-600 bg-slate-900 text-gray-300 hover:bg-slate-700 transition-all">
+                        🤖 AUTO
+                    </button>
+                    <button onclick="toggleMode('manual')" id="manualBtn" 
+                        class="px-6 py-2 text-sm font-medium rounded-r-lg border border-slate-600 bg-slate-900 text-gray-300 hover:bg-slate-700 transition-all">
+                        👤 MANUAL
+                    </button>
+                </div>
+            </div>
+
+            <div id="captureArea" class="hidden">
+                <button onclick="triggerCapture()" id="captureBtn" 
+                    class="px-8 py-2 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-lg font-bold shadow-lg transition-all active:scale-95">
+                    📸 ҚАЗІР ТҮСІРУ
+                </button>
+            </div>
+        </div>
+
         <div id="loadingIndicator" class="flex justify-center items-center py-20">
             <div class="loading"></div>
         </div>
 
-        <!-- Violations Grid -->
-        <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Cards will be inserted here by JavaScript -->
-        </div>
+        <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
 
-        <!-- Empty State -->
         <div id="emptyState" class="hidden text-center py-20">
             <div class="text-6xl mb-4">📭</div>
             <h3 class="text-2xl font-bold text-gray-400 mb-2">Деректер жоқ</h3>
@@ -187,7 +175,6 @@ function toggleMode(mode) {
         </div>
     </main>
 
-    <!-- Lightbox -->
     <div id="lightbox" class="lightbox" onclick="closeLightbox()">
         <span class="lightbox-close">&times;</span>
         <img id="lightboxImg" src="" alt="Violation Image">
@@ -196,7 +183,50 @@ function toggleMode(mode) {
     <script>
         let allViolations = [];
 
-        // Load violations on page load
+        // --- ЖАҢА ФУНКЦИЯЛАР ---
+        async function toggleMode(mode) {
+            try {
+                const response = await fetch('/api/set_mode', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ mode: mode })
+                });
+                const data = await response.json();
+                
+                // Дизайнды жаңарту
+                const isAuto = mode === 'auto';
+                document.getElementById('autoBtn').classList.toggle('mode-btn-active', isAuto);
+                document.getElementById('manualBtn').classList.toggle('mode-btn-active', !isAuto);
+                
+                // Manual режимде "Түсіру" батырмасын көрсету
+                document.getElementById('captureArea').classList.toggle('hidden', isAuto);
+                
+                console.log("Режим өзгертілді:", data.current_mode);
+            } catch (e) {
+                alert("Режимді өзгерту мүмкін болмады");
+            }
+        }
+
+        async function triggerCapture() {
+            const btn = document.getElementById('captureBtn');
+            btn.disabled = true;
+            btn.innerText = "⌛ Жіберілуде...";
+            
+            try {
+                const response = await fetch('/api/trigger_capture', { method: 'POST' });
+                if (response.ok) {
+                    alert("📸 Суретке түсіру командасы жіберілді! 3 секундтан кейін тізім жаңарады.");
+                    setTimeout(loadViolations, 3000);
+                }
+            } catch (e) {
+                alert("Қате: " + e);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "📸 ҚАЗІР ТҮСІРУ";
+            }
+        }
+        // --- СОҢЫ ---
+
         window.addEventListener('DOMContentLoaded', () => {
             loadViolations();
         });
@@ -213,11 +243,8 @@ function toggleMode(mode) {
             try {
                 const response = await fetch('/api/violations');
                 const data = await response.json();
-
                 allViolations = data.violations;
-
                 document.getElementById('totalCount').textContent = data.total;
-
                 loadingIndicator.classList.add('hidden');
 
                 if (allViolations.length === 0) {
@@ -228,20 +255,13 @@ function toggleMode(mode) {
             } catch (error) {
                 console.error('Error loading violations:', error);
                 loadingIndicator.classList.add('hidden');
-                violationsGrid.innerHTML = `
-                    <div class="col-span-full text-center py-20">
-                        <div class="text-6xl mb-4">⚠️</div>
-                        <h3 class="text-2xl font-bold text-red-400 mb-2">Қате орын алды</h3>
-                        <p class="text-gray-500">${error.message}</p>
-                    </div>
-                `;
+                violationsGrid.innerHTML = `<div class="col-span-full text-center py-20"><h3 class="text-red-400">Қате орын алды</h3></div>`;
             }
         }
 
         function displayViolations(violations) {
             const violationsGrid = document.getElementById('violationsGrid');
             violationsGrid.innerHTML = '';
-
             violations.forEach(violation => {
                 const card = createViolationCard(violation);
                 violationsGrid.insertAdjacentHTML('beforeend', card);
@@ -250,66 +270,32 @@ function toggleMode(mode) {
 
         function createViolationCard(violation) {
             const imageUrl = `/static/${violation.image_path}`;
-
             return `
                 <div class="violation-card bg-slate-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-slate-700">
-                    <!-- Image -->
                     <div class="relative h-48 bg-slate-900 overflow-hidden">
-                        <img 
-                            src="${imageUrl}" 
-                            alt="Violation Image" 
-                            class="w-full h-full object-cover img-thumbnail"
-                            onclick="openLightbox('${imageUrl}')"
-                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%231e293b%22 width=%22200%22 height=%22200%22/%3E%3Ctext fill=%22%23475569%22 font-size=%2220%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"
-                        >
+                        <img src="${imageUrl}" class="w-full h-full object-cover img-thumbnail" onclick="openLightbox('${imageUrl}')">
                         <div class="absolute top-2 right-2">
-                            <span class="badge-danger px-3 py-1 rounded-full text-xs font-bold">
-                                ${violation.violation_type}
-                            </span>
+                            <span class="badge-danger px-3 py-1 rounded-full text-xs font-bold">${violation.violation_type}</span>
                         </div>
                     </div>
-                    
-                    <!-- Content -->
                     <div class="p-4">
                         <div class="flex items-center justify-between mb-3">
                             <div class="flex items-center space-x-2">
                                 <span class="text-2xl">👷</span>
                                 <span class="font-semibold text-gray-200">${violation.object_name}</span>
                             </div>
-                            <span class="text-xs px-2 py-1 bg-slate-700 rounded text-gray-400">
-                                #${violation.id}
-                            </span>
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded text-gray-400">#${violation.id}</span>
                         </div>
-                        
-                        <div class="space-y-2 text-sm">
-                            <div class="flex items-center space-x-2 text-gray-400">
-                                <span>🕒</span>
-                                <span>${violation.timestamp}</span>
-                            </div>
-                            
-                            <div class="flex items-center space-x-2 text-gray-400">
-                                <span>📅</span>
-                                <span>${new Date(violation.created_at).toLocaleString('kk-KZ')}</span>
-                            </div>
+                        <div class="space-y-2 text-sm text-gray-400">
+                            <div>🕒 ${violation.timestamp}</div>
+                            <div>📅 ${new Date(violation.created_at).toLocaleString('kk-KZ')}</div>
                         </div>
-                        
                         <div class="mt-4 flex space-x-2">
-                            <button 
-                                onclick="openLightbox('${imageUrl}')"
-                                class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
-                            >
-                                🔍 Толығырақ
-                            </button>
-                            <button 
-                                onclick="deleteViolation(${violation.id})"
-                                class="px-3 py-2 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition text-sm"
-                            >
-                                🗑️
-                            </button>
+                            <button onclick="openLightbox('${imageUrl}')" class="flex-1 px-3 py-2 bg-blue-600 rounded-lg text-sm">🔍 Толығырақ</button>
+                            <button onclick="deleteViolation(${violation.id})" class="px-3 py-2 bg-red-600/20 rounded-lg">🗑️</button>
                         </div>
                     </div>
-                </div>
-            `;
+                </div>`;
         }
 
         function openLightbox(imageUrl) {
@@ -324,60 +310,24 @@ function toggleMode(mode) {
         function filterViolations() {
             const searchTerm = document.getElementById('searchInput').value.toLowerCase();
             const filterType = document.getElementById('filterType').value;
-
             let filtered = allViolations;
-
-            // Filter by type
-            if (filterType !== 'all') {
-                filtered = filtered.filter(v => v.violation_type === filterType);
-            }
-
-            // Filter by search term
+            if (filterType !== 'all') filtered = filtered.filter(v => v.violation_type === filterType);
             if (searchTerm) {
-                filtered = filtered.filter(v =>
-                    v.object_name.toLowerCase().includes(searchTerm) ||
-                    v.timestamp.toLowerCase().includes(searchTerm) ||
+                filtered = filtered.filter(v => 
+                    v.object_name.toLowerCase().includes(searchTerm) || 
                     v.violation_type.toLowerCase().includes(searchTerm)
                 );
             }
-
             displayViolations(filtered);
-
-            if (filtered.length === 0) {
-                document.getElementById('emptyState').classList.remove('hidden');
-            } else {
-                document.getElementById('emptyState').classList.add('hidden');
-            }
         }
 
         async function deleteViolation(id) {
-            if (!confirm('Бұл жазбаны өшіргіңіз келетініне сенімдісіз бе?')) {
-                return;
-            }
-
-            try {
-                const response = await fetch(`/api/violations/${id}`, {
-                    method: 'DELETE'
-                });
-
-                if (response.ok) {
-                    loadViolations();
-                } else {
-                    alert('Өшіру кезінде қате орын алды');
-                }
-            } catch (error) {
-                console.error('Error deleting violation:', error);
-                alert('Қате: ' + error.message);
-            }
+            if (!confirm('Өшіруді растайсыз ба?')) return;
+            await fetch(`/api/violations/${id}`, { method: 'DELETE' });
+            loadViolations();
         }
 
-        // Close lightbox with ESC key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeLightbox();
-            }
-        });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
     </script>
 </body>
-
 </html>
