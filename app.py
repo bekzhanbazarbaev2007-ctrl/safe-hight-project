@@ -51,6 +51,29 @@ def trigger_capture():
     system_status["trigger_capture"] = True
     return jsonify({"status": "command_sent"})
 
+@app.route('/api/add_violation', methods=['POST'])
+def add_violation():
+    try:
+        data = request.json
+        # Боттан келетін деректер
+        violation_type = data.get('violation_type', 'No Helmet')
+        image_path = data.get('image_path') # Мысалы: violations/alert_123.jpg
+        timestamp = data.get('timestamp')
+        
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
+        # Деректерді базаға енгізу
+        cursor.execute('''
+            INSERT INTO violations (timestamp, violation_type, image_path, object_name)
+            VALUES (?, ?, ?, ?)
+        ''', (timestamp, violation_type, image_path, "Жұмысшы"))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({'status': 'success'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+        
 # --- ЖАҢА: Бот үшін статус тексеру ---
 @app.route('/api/get_system_status', methods=['GET'])
 def get_status():
@@ -122,3 +145,4 @@ def delete_violation(violation_id):
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
