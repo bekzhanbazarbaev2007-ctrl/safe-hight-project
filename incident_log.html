@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="kk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Incident Log - Safety AI System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+        }
+
+        /* Lightbox styles */
+        .lightbox {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .lightbox.active {
+            display: flex;
+        }
+
+        .lightbox img {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .lightbox-close {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            font-size: 40px;
+            color: white;
+            cursor: pointer;
+            z-index: 1000;
+        }
+
+        /* Card hover effects */
+        .violation-card {
+            transition: all 0.3s ease;
+        }
+
+        .violation-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Image thumbnail hover */
+        .img-thumbnail {
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .img-thumbnail:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.5);
+        }
+
+        /* Loading animation */
+        .loading {
+            border: 4px solid #1e293b;
+            border-top: 4px solid #3b82f6;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Badge styles */
+        .badge-danger {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+    </style>
+</head>
+
+<body class="text-gray-100">
+    <!-- Header -->
+    <header class="bg-slate-800/50 backdrop-blur-sm border-b border-slate-700 sticky top-0 z-50">
+        <div class="container mx-auto px-6 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div
+                        class="w-12 h-12 bg-gradient-to-br from-red-500 to-orange-600 rounded-lg flex items-center justify-center">
+                        <span class="text-2xl">⚠️</span>
+                    </div>
+                    <div>
+                        <h1
+                            class="text-2xl font-bold bg-gradient-to-r from-red-400 to-orange-500 bg-clip-text text-transparent">
+                            Incident Log
+                        </h1>
+                        <p class="text-sm text-gray-400">Қауіпсіздік бұзушылықтары журналы</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <div class="text-right">
+                        <p class="text-sm text-gray-400">Барлығы бұзушылықтар</p>
+                        <p class="text-2xl font-bold text-blue-400" id="totalCount">0</p>
+                    </div>
+                    <button onclick="loadViolations()"
+                        class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition">
+                        🔄 Жаңарту
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-8">
+        <!-- Filter & Search -->
+        <div class="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 mb-6 border border-slate-700">
+            <div class="flex flex-wrap gap-4 items-center">
+                <div class="flex-1 min-w-[200px]">
+                    <input type="text" id="searchInput" placeholder="🔍 Іздеу..."
+                        class="w-full px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none"
+                        onkeyup="filterViolations()">
+                </div>
+
+                <select id="filterType" onchange="filterViolations()"
+                    class="px-4 py-2 bg-slate-900 border border-slate-600 rounded-lg text-white focus:ring-2 focus:ring-blue-500 outline-none">
+                    <option value="all">Барлық түрлері</option>
+                    <option value="No Helmet">Каскасыз</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loadingIndicator" class="flex justify-center items-center py-20">
+            <div class="loading"></div>
+        </div>
+
+        <!-- Violations Grid -->
+        <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Cards will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="hidden text-center py-20">
+            <div class="text-6xl mb-4">📭</div>
+            <h3 class="text-2xl font-bold text-gray-400 mb-2">Деректер жоқ</h3>
+            <p class="text-gray-500">Әзірше ешқандай бұзушылық тіркелген жоқ</p>
+        </div>
+    </main>
+
+    <!-- Lightbox -->
+    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightboxImg" src="" alt="Violation Image">
+    </div>
+
+    <script>
+        let allViolations = [];
+
+        // Load violations on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadViolations();
+        });
+
+        async function loadViolations() {
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const violationsGrid = document.getElementById('violationsGrid');
+            const emptyState = document.getElementById('emptyState');
+
+            loadingIndicator.classList.remove('hidden');
+            violationsGrid.innerHTML = '';
+            emptyState.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/violations');
+                const data = await response.json();
+
+                allViolations = data.violations;
+
+                document.getElementById('totalCount').textContent = data.total;
+
+                loadingIndicator.classList.add('hidden');
+
+                if (allViolations.length === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    displayViolations(allViolations);
+                }
+            } catch (error) {
+                console.error('Error loading violations:', error);
+                loadingIndicator.classList.add('hidden');
+                violationsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-20">
+                        <div class="text-6xl mb-4">⚠️</div>
+                        <h3 class="text-2xl font-bold text-red-400 mb-2">Қате орын алды</h3>
+                        <p class="text-gray-500">${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayViolations(violations) {
+            const violationsGrid = document.getElementById('violationsGrid');
+            violationsGrid.innerHTML = '';
+
+            violations.forEach(violation => {
+                const card = createViolationCard(violation);
+                violationsGrid.insertAdjacentHTML('beforeend', card);
+            });
+        }
+
+        function createViolationCard(violation) {
+            const imageUrl = `/static/${violation.image_path}`;
+
+            return `
+                <div class="violation-card bg-slate-800/50 backdrop-blur-sm rounded-xl overflow-hidden border border-slate-700">
+                    <!-- Image -->
+                    <div class="relative h-48 bg-slate-900 overflow-hidden">
+                        <img 
+                            src="${imageUrl}" 
+                            alt="Violation Image" 
+                            class="w-full h-full object-cover img-thumbnail"
+                            onclick="openLightbox('${imageUrl}')"
+                            onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22200%22%3E%3Crect fill=%22%231e293b%22 width=%22200%22 height=%22200%22/%3E%3Ctext fill=%22%23475569%22 font-size=%2220%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dy=%22.3em%22%3ENo Image%3C/text%3E%3C/svg%3E'"
+                        >
+                        <div class="absolute top-2 right-2">
+                            <span class="badge-danger px-3 py-1 rounded-full text-xs font-bold">
+                                ${violation.violation_type}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Content -->
+                    <div class="p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-2xl">👷</span>
+                                <span class="font-semibold text-gray-200">${violation.object_name}</span>
+                            </div>
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded text-gray-400">
+                                #${violation.id}
+                            </span>
+                        </div>
+                        
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center space-x-2 text-gray-400">
+                                <span>🕒</span>
+                                <span>${violation.timestamp}</span>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2 text-gray-400">
+                                <span>📅</span>
+                                <span>${new Date(violation.created_at).toLocaleString('kk-KZ')}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-4 flex space-x-2">
+                            <button 
+                                onclick="openLightbox('${imageUrl}')"
+                                class="flex-1 px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg transition text-sm font-medium"
+                            >
+                                🔍 Толығырақ
+                            </button>
+                            <button 
+                                onclick="deleteViolation(${violation.id})"
+                                class="px-3 py-2 bg-red-600/20 hover:bg-red-600/40 rounded-lg transition text-sm"
+                            >
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function openLightbox(imageUrl) {
+            document.getElementById('lightbox').classList.add('active');
+            document.getElementById('lightboxImg').src = imageUrl;
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').classList.remove('active');
+        }
+
+        function filterViolations() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const filterType = document.getElementById('filterType').value;
+
+            let filtered = allViolations;
+
+            // Filter by type
+            if (filterType !== 'all') {
+                filtered = filtered.filter(v => v.violation_type === filterType);
+            }
+
+            // Filter by search term
+            if (searchTerm) {
+                filtered = filtered.filter(v =>
+                    v.object_name.toLowerCase().includes(searchTerm) ||
+                    v.timestamp.toLowerCase().includes(searchTerm) ||
+                    v.violation_type.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            displayViolations(filtered);
+
+            if (filtered.length === 0) {
+                document.getElementById('emptyState').classList.remove('hidden');
+            } else {
+                document.getElementById('emptyState').classList.add('hidden');
+            }
+        }
+
+        async function deleteViolation(id) {
+            if (!confirm('Бұл жазбаны өшіргіңіз келетініне сенімдісіз бе?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/violations/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    loadViolations();
+                } else {
+                    alert('Өшіру кезінде қате орын алды');
+                }
+            } catch (error) {
+                console.error('Error deleting violation:', error);
+                alert('Қате: ' + error.message);
+            }
+        }
+
+        // Close lightbox with ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeLightbox();
+            }
+        });
+    </script>
+</body>
+
+</html>
