@@ -12,7 +12,7 @@ TOKEN = "8071874921:AAHZn3SdfNc0K29fdnLBbB9quEGnuK6czc4"
 CHAT_ID = "5868939793"
 
 # WEB SERVER INTEGRATION
-WEB_SERVER_URL = "http://localhost:5000/api/add_violation"
+WEB_SERVER_URL = "https://safe-hight-project.onrender.com/api/add_violation"
 
 stats = {
     "start_time": time.time(),
@@ -207,3 +207,4 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
+
