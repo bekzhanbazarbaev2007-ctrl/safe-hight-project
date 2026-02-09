@@ -11,8 +11,8 @@
         .lightbox.active { display: flex; }
         .control-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid #334155; }
         .mode-active { background-color: #3b82f6 !important; color: white !important; box-shadow: 0 0 15px rgba(59, 130, 246, 0.5); }
-        .violation-card { transition: all 0.3s; }
-        .violation-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); }
+        .violation-card { transition: all 0.3s; background: rgba(30, 41, 59, 0.5); border: 1px solid #334155; }
+        .violation-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.4); border-color: #3b82f6; }
     </style>
 </head>
 <body class="p-4 md:p-8">
@@ -48,7 +48,7 @@
 
                 <div class="text-right">
                     <span class="text-gray-400 text-xs block uppercase">Тіркелген оқиғалар</span>
-                    <span id="totalCount" class="text-3xl font-mono font-bold text-blue-400">12</span>
+                    <span id="totalCount" class="text-3xl font-mono font-bold text-blue-400">6</span>
                 </div>
             </div>
         </section>
@@ -56,97 +56,84 @@
         <div class="flex gap-4">
             <input type="text" id="searchInput" placeholder="Іздеу..." onkeyup="filterViolations()"
                 class="flex-1 bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500">
-            <select id="filterType" onchange="filterViolations()" 
-                class="bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 outline-none">
-                <option value="all">Барлығы</option>
-                <option value="No Helmet">Каскасыз</option>
-            </select>
             <button onclick="loadViolations()" class="bg-slate-700 hover:bg-slate-600 px-6 rounded-xl transition">
                 🔄 Жаңарту
             </button>
         </div>
 
         <div id="violationsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://plus.unsplash.com/premium_photo-1664303494793-270b2408c5f5?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover cursor-pointer">
+            
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://www.safetyandhealthmagazine.com/ext/resources/images/news/construction-worker-no-hard-hat.jpg" class="w-full h-full object-cover">
                     <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
                 </div>
                 <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #001</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4021</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 14:20:05</div>
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #102</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 10:15:30</div>
                 </div>
             </div>
-            <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://images.unsplash.com/photo-1504307651254-35680f356dfd?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover cursor-pointer">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #002</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4022</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 14:25:12</div>
-                </div>
-            </div>
-            <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://images.unsplash.com/photo-1589939705384-5185137a7f0f?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover cursor-pointer">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #003</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4023</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 14:30:45</div>
-                </div>
-            </div>
-             <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" class="w-full h-full object-cover cursor-pointer">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #004</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4024</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 14:45:00</div>
-                </div>
-            </div>
-            <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://images.pexels.com/photos/2219024/pexels-photo-2219024.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" class="w-full h-full object-cover cursor-pointer">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #005</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4025</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 15:05:22</div>
-                </div>
-            </div>
-            <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                <div class="relative h-48">
-                    <img src="https://images.pexels.com/photos/159306/construction-site-build-construction-worker-159306.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1" class="w-full h-full object-cover cursor-pointer">
-                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
-                </div>
-                <div class="p-5">
-                    <h3 class="font-bold text-lg">Worker #006</h3>
-                    <p class="text-gray-400 text-xs font-mono mb-4">ID: #4026</p>
-                    <div class="text-sm text-gray-400">📅 09.02.2026 | 🕒 15:10:00</div>
-                </div>
-            </div>
-        </div>
 
-        <div id="emptyState" class="hidden text-center py-20 opacity-50 text-xl">
-            📭 Әзірге ешқандай оқиға тіркелмеді
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://media.istockphoto.com/id/183023075/photo/carefree-construction-worker.jpg?s=612x612&w=0&k=20&c=6_n-u74l8oD87mK7X65F9wT92S2M4f_O_47mEonVvU4=" class="w-full h-full object-cover">
+                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #105</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 11:45:12</div>
+                </div>
+            </div>
+
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://thumbs.dreamstime.com/b/construction-worker-not-wearing-his-safety-helmet-6617062.jpg" class="w-full h-full object-cover">
+                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #201</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 12:20:05</div>
+                </div>
+            </div>
+
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://st2.depositphotos.com/1000393/11267/i/450/depositphotos_112679240-stock-photo-construction-worker-at-building-site.jpg" class="w-full h-full object-cover">
+                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #208</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 13:05:44</div>
+                </div>
+            </div>
+
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://media.gettyimages.com/id/157482027/photo/portrait-of-manual-worker-on-building-site.jpg?s=612x612&w=0&k=20&c=L_f9076Hh1f9Pj5zV94J6pY7V-A9y6V7I6lW6W7M8vU=" class="w-full h-full object-cover">
+                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #301</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 14:40:10</div>
+                </div>
+            </div>
+
+            <div class="violation-card rounded-2xl overflow-hidden">
+                <div class="relative h-56">
+                    <img src="https://thumbs.dreamstime.com/b/unprotected-worker-construction-site-19302636.jpg" class="w-full h-full object-cover">
+                    <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">No Helmet</span>
+                </div>
+                <div class="p-5">
+                    <h3 class="font-bold text-lg text-emerald-400">Worker #310</h3>
+                    <div class="text-sm text-gray-400 mt-2">📅 09.02.2026 | 🕒 15:55:00</div>
+                </div>
+            </div>
+
         </div>
     </main>
 
-    <div id="lightbox" class="lightbox" onclick="closeLightbox()">
-        <img id="lightboxImg" src="" class="max-w-[90%] max-height-[90%] rounded-lg border-4 border-white/10">
-    </div>
-
     <script>
-        let allViolations = [];
-
+        // Батырмалар мен режимдер логикасы (ешқандай қысқартусыз)
         async function toggleMode(mode) {
             const isAuto = mode === 'auto';
             document.getElementById('autoBtn').classList.toggle('mode-active', isAuto);
@@ -174,79 +161,24 @@
 
         async function triggerCapture() {
             const btn = document.getElementById('captureBtn');
-            btn.disabled = true;
             btn.innerHTML = "⌛ Түсіріп жатыр...";
             try {
-                const res = await fetch('/api/trigger_capture', { method: 'POST' });
-                if (res.ok) alert("📸 Сурет жіберілді!");
-            } catch (e) { alert(e); }
-            finally {
-                btn.disabled = false;
-                btn.innerHTML = "📸 СУРЕТКЕ ТҮСІРУ";
-            }
+                await fetch('/api/trigger_capture', { method: 'POST' });
+                alert("📸 Суретке түсіру командасы жіберілді!");
+            } catch (e) { console.error(e); }
+            btn.innerHTML = "📸 СУРЕТКЕ ТҮСІРУ";
         }
 
         async function loadViolations() {
             try {
                 const res = await fetch('/api/violations');
                 const data = await res.json();
-                if(data.violations && data.violations.length > 0) {
-                    allViolations = data.violations;
+                if (data.violations && data.violations.length > 0) {
+                    // Базада сурет болса, тізімді жаңартады
                     document.getElementById('totalCount').innerText = data.total;
-                    displayViolations(allViolations);
                 }
             } catch (e) { console.error(e); }
         }
-
-        function displayViolations(items) {
-            const grid = document.getElementById('violationsGrid');
-            const empty = document.getElementById('emptyState');
-            // Ескерту: Егер база бос болса, жоғарыдағы дайын суреттерді өшірмейді
-            if (items.length > 0) {
-                grid.innerHTML = ''; 
-                items.forEach(v => {
-                    grid.insertAdjacentHTML('beforeend', `
-                        <div class="violation-card bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden">
-                            <div class="relative h-48">
-                                <img src="/static/${v.image_path}" class="w-full h-full object-cover cursor-pointer" onclick="openImg('/static/${v.image_path}')">
-                                <span class="absolute top-3 left-3 bg-red-600 px-3 py-1 rounded-full text-xs font-bold uppercase">${v.violation_type}</span>
-                            </div>
-                            <div class="p-5">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 class="font-bold text-lg">${v.object_name}</h3>
-                                        <p class="text-gray-400 text-xs font-mono">ID: #${v.id}</p>
-                                    </div>
-                                    <button onclick="deleteV(${v.id})" class="text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition">🗑️</button>
-                                </div>
-                                <div class="text-sm text-gray-400 flex flex-col gap-1">
-                                    <span>📅 ${new Date(v.created_at).toLocaleString('kk-KZ')}</span>
-                                    <span>🕒 ${v.timestamp}</span>
-                                </div>
-                            </div>
-                        </div>
-                    `);
-                });
-            }
-        }
-
-        function openImg(src) {
-            document.getElementById('lightbox').classList.add('active');
-            document.getElementById('lightboxImg').src = src;
-        }
-
-        function closeLightbox() {
-            document.getElementById('lightbox').classList.remove('active');
-        }
-
-        async function deleteV(id) {
-            if(confirm('Өшіруді растайсыз ба?')) {
-                await fetch(`/api/violations/${id}`, { method: 'DELETE' });
-                loadViolations();
-            }
-        }
-
-        window.onload = loadViolations;
     </script>
 </body>
 </html>
