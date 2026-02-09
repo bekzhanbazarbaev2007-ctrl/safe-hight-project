@@ -5,15 +5,22 @@ from datetime import datetime
 import base64
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'static/violations'
+
+# --- ОСЫ БӨЛІМДІ ҚОСТЫҚ (RENDER ҮШІН) ---
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, 'database.db')
+UPLOAD_FOLDER = os.path.join(BASE_DIR, 'static', 'violations')
+
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
 # Create upload folder if it doesn't exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+# ---------------------------------------
 
 # Initialize database
 def init_db():
-    conn = sqlite3.connect('database.db')
+    conn = sqlite3.connect(DB_PATH) # DB_PATH-қа ауыстырдық
     cursor = conn.cursor()
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS violations (
@@ -52,9 +59,11 @@ def add_violation():
             # Decode base64 image
             image_data = base64.b64decode(data['image_base64'])
             filename = f"violation_{int(datetime.now().timestamp())}.jpg"
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
-            with open(image_path, 'wb') as f:
+            # РЕНДЕР ҮШІН ТОЛЫҚ ЖОЛ
+            full_save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            
+            with open(full_save_path, 'wb') as f:
                 f.write(image_data)
             
             # Store relative path for database
@@ -68,19 +77,20 @@ def add_violation():
             return jsonify({'error': 'No image provided'}), 400
         
         # Save to database
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DB_PATH) # DB_PATH қолданамыз
         cursor = conn.cursor()
         cursor.execute('''
             INSERT INTO violations (timestamp, violation_type, image_path, object_name)
             VALUES (?, ?, ?, ?)
         ''', (timestamp, violation_type, image_path, object_name))
         conn.commit()
+        last_id = cursor.lastrowid # ID-ді алу үшін осында жаздық
         conn.close()
         
         return jsonify({
             'status': 'success',
             'message': 'Violation recorded',
-            'id': cursor.lastrowid
+            'id': last_id
         }), 201
     
     except Exception as e:
@@ -90,7 +100,7 @@ def add_violation():
 def get_violations():
     """Get all violations"""
     try:
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DB_PATH) # DB_PATH
         conn.row_factory = sqlite3.Row
         cursor = conn.cursor()
         
@@ -136,7 +146,7 @@ def get_violations():
 def delete_violation(violation_id):
     """Delete a specific violation"""
     try:
-        conn = sqlite3.connect('database.db')
+        conn = sqlite3.connect(DB_PATH) # DB_PATH
         cursor = conn.cursor()
         
         # Get image path before deleting
@@ -150,7 +160,8 @@ def delete_violation(violation_id):
             
             # Optionally delete the image file
             image_path = row[0]
-            full_path = os.path.join('static', image_path)
+            # РЕНДЕР ҮШІН ТОЛЫҚ ЖОЛ
+            full_path = os.path.join(BASE_DIR, 'static', image_path)
             if os.path.exists(full_path):
                 os.remove(full_path)
             
@@ -164,6 +175,6 @@ def delete_violation(violation_id):
         return jsonify({'error': str(e)}), 500
 
 if __name__ == '__main__':
-    print("🚀 Server starting on http://localhost:5000")
-    print("📊 Incident Log: http://localhost:5000")
+    # Render-ге жүктегенде бұл бөлім тек локальды тексеру үшін қалады
+    print("🚀 Server starting...")
     app.run(debug=True, host='0.0.0.0', port=5000)
